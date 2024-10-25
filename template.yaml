@@ -1,0 +1,65 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: deploy-gcp-vm
+  title: Deploy GCP VM Instance with Terraform
+  description: Scaffolder template to deploy a VM instance on GCP using Terraform.
+  tags:
+    - gcp
+    - terraform
+spec:
+  owner: your-team
+  type: service
+
+  parameters:
+    - title: GCP VM Deployment Configuration
+      properties:
+        project_id:
+          title: GCP Project ID
+          type: string
+          description: The ID of the GCP project where the VM instance will be deployed.
+          ui: text
+        region:
+          title: GCP Region
+          type: string
+          description: GCP region to deploy the VM.
+          ui: text
+          default: us-west1
+        zone:
+          title: GCP Zone
+          type: string
+          description: GCP zone to deploy the VM.
+          ui: text
+          default: us-west1-b
+        ssh_public_key:
+          title: SSH Public Key
+          type: string
+          description: The public key to use for SSH access.
+          ui: text
+          default: ~/.ssh/id_rsa.pub
+
+  steps:
+    - id: fetch-repository
+      name: Fetch Repository
+      action: git:clone
+      input:
+        url: '{{ parameters.repositoryUrl }}'
+        path: './repository'
+
+    - id: terraform-init
+      name: Initialize Terraform
+      action: terraform:init
+      input:
+        workingDirectory: ./repository
+
+    - id: terraform-apply
+      name: Apply Terraform Configuration
+      action: terraform:apply
+      input:
+        workingDirectory: ./repository
+        autoApprove: true
+
+  output:
+    links:
+      - url: "{{ steps.terraform-apply.output.instance_ip }}"
+        title: "Deployed VM Instance IP"
